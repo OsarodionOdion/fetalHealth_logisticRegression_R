@@ -1,0 +1,399 @@
+---
+title: "HW3-Classification modeling with R"
+author: "misken"
+date: "February 9, 2022"
+output:
+ html_document: 
+   smart: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Step 1 - Familiarize yourself with the data and the assignment
+
+This assignment will focus on building simple classification models for
+predicting fetal health based on a number of clinical measurements known
+as *cardiotocographic data*. 
+
+The following introductory information was taken from the main
+[Kaggle Dataset page](https://www.kaggle.com/andrewmvd/fetal-health-classification) for this data:
+
+
+>    Context
+
+> Reduction of child mortality is reflected in several of the United Nations' Sustainable Development Goals and is a key indicator of human progress. The UN expects that by 2030, countries end preventable deaths of newborns and children under 5 years of age, with all countries aiming to reduce under‑5 mortality to at least as low as 25 per 1,000 live births.
+> 
+Parallel to notion of child mortality is of course maternal mortality, which accounts for 295 000 deaths during and following pregnancy and childbirth (as of 2017). The vast majority of these deaths (94%) occurred in low-resource settings, and most could have been prevented.
+>
+> In light of what was mentioned above, Cardiotocograms (CTGs) are a simple and cost accessible option to assess fetal health, allowing healthcare professionals to take action in order to prevent child and maternal mortality. The equipment itself works by sending ultrasound pulses and reading its response, thus shedding light on fetal heart rate (FHR), fetal movements, uterine contractions and more.
+>
+> Data
+>
+> This dataset contains 2126 records of features extracted from Cardiotocogram exams, which were then classified by three expert obstetritians into 3 classes:
+
+> * Normal
+> * Suspect
+> * Pathological
+
+The definitions of the columns are:
+
+    * baseline value - FHR baseline (beats per minute)
+    * accelerations - Number of accelerations per second
+    * fetal_movement - Number of fetal movements per second
+    * uterine_contractions - Number of uterine contractions per second
+    * light_decelerations - Number of light decelerations per second
+    * severe_decelerations - Number of severe decelerations per second
+    * prolongued_decelerations - Number of prolonged decelerations per second
+    * abnormal_short_term_variability - Percentage of time with abnormal short term variability
+    * mean_value_of_short_term_variability - Mean value of short term variability
+    * percentage_of_time_with_abnormal_long_term_variability - Percentage of time with abnormal long term variability
+    * mean_value_of_long_term_variability - Mean value of long term variability
+    * histogram_width - Width of FHR histogram
+    * histogram_min - Minimum (low frequency) of FHR histogram
+    * histogram_max - Maximum (high frequency) of FHR histogram
+    * histogram_number_of_peaks - Number of histogram peaks
+    * histogram_number_of_zeroes - Number of histogram zeros
+    * histogram_mode - Histogram mode
+    * histogram_mean - Histogram mean
+    * histogram_median - Histogram median
+    * histogram_variance - Histogram variance
+    * histogram_tendency - Histogram tendency
+
+You can learn much more about the study behind this dataset from the following
+published paper:
+
+* https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6822315/
+
+While in the original study and dataset, there were three classes for the
+target variable (Normal, Suspect, Pathological), we will convert this to
+a binary classification problem where 1 will be Suspect or Pathological and
+0 will be Normal. Multi-class problems are a bit beyond the scope of this
+introduction to classification problems.
+
+As we did in HW2, you'll be creating an R Markdown document to
+do the analysis as well as to document the
+steps you did (and answer some questions I'll throw at you).
+
+You'll notice a few "Hacker Extra" tasks thrown in. These are for those of you
+who want to go a little above and beyond and attempt some more challenging
+tasks.
+
+
+
+## Step 2 - Create a new R Markdown document
+
+Save this file as a new R Markdown document and name it something that
+includes your last name in the filename. Save it into the
+same folder as this file.
+
+### Load libraries
+
+```{r}
+library(dplyr)   # Group by analysis and other SQLish things.
+library(ggplot2) # Plotting, of course
+library(corrplot) # Correlation plots
+library(tidyr)   # Data reshaping
+library(caret)   # Many aspects of predictive modeling
+library(skimr)       # An automated EDA tool (you saw this in a previous assignment)
+library(rpart)   # Decision trees (regression trees)
+library(rpart.plot) # Making plots of decision trees
+library(randomForest) # Random forests
+```
+
+## Step 3 - Create project and load data
+
+Create an R Studio project in the current folder (the one containing this file). You'll notice that there is a folder named **data**.
+Inside of it you'll find the data file for this assignment:
+
+- **fetal_health.csv**
+
+
+### Load and explore the data
+
+```{r load_data}
+fetal_health <- read.csv("./data/fetal_health.csv")
+```
+
+Let's look at the target variable we'll be tryng to predict.
+
+```{r}
+table(fetal_health$fetal_health)
+```
+
+Now we will recode the 1's as a 0 and the 2's and 3's as a 1. I'm going to do this in a new column
+so that we can check and make sure we've got it right.
+
+```{r}
+fetal_health$b_fetal_health <- fetal_health$fetal_health
+fetal_health$b_fetal_health[fetal_health$b_fetal_health == 1] <- 0
+fetal_health$b_fetal_health[fetal_health$b_fetal_health >= 2] <- 1
+
+table(fetal_health$b_fetal_health, fetal_health$fetal_health)
+```
+
+Looks good, let's drop the original `fetal_health` column and convert the b_fetal_health` column
+to a factor. I'm explicitly setting the order of the factor levels so that "0" is the first level just
+so there's no confusion.
+
+```{r}
+fetal_health <- fetal_health %>% 
+  select (!fetal_health) 
+
+fetal_health$b_fetal_health <- factor(fetal_health$b_fetal_health, levels=c("0", "1"))
+```
+
+Find the number of patients and the percentage of patients for the two fetal health levels - 0 and 1. You'll
+see that there are about 78% of the patients with a normal fetal health assessment (i.e. `b_fetal_health` = 1)
+
+```{r target_prop_check}
+fetal_health %>% 
+  group_by(b_fetal_health) %>% 
+  summarise(no_of_patients = n(),
+            percentage = no_of_patients/nrow(fetal_health))
+
+```
+
+
+Use `str`, `summary`, and `skim` to get a sense of the data. 
+
+```{r firstlook}
+str(fetal_health)
+```
+
+
+
+```{r}
+summary(fetal_health)
+```
+
+```{r}
+skim(fetal_health)
+```
+
+Do some EDA to try to uncover some relationships that may end up being
+useful in building a predictive model for `b_fetal_health`. You learned
+things in HW2 which should be useful here.
+
+
+```{r create_boxplots}
+g <- ggplot(fetal_health)
+g + geom_boxplot(aes(x=b_fetal_health, y=baseline.value, colour=b_fetal_health))
+g + geom_boxplot(aes(x=b_fetal_health, y=accelerations, colour=b_fetal_health))
+```
+
+Add more code chunks as needed...
+
+```{r violinplots}
+g + geom_violin(aes(x=b_fetal_health, y=baseline.value, colour=b_fetal_health))
+g + geom_violin(aes(x=b_fetal_health, y=accelerations, colour=b_fetal_health))
+```
+
+```{r}
+g + geom_point(aes(x=accelerations, y=baseline.value, colour=b_fetal_health, shape=b_fetal_health))
+```
+
+
+## Step 4 - Partition into training and test sets
+
+We will use the [caret](https://topepo.github.io/caret/) package to do the partitioning of our data into training and test dataframes. Just run this chunk to create training and test datasets. This way we'll
+all be working with the same datasets. Notice that the test set is 20% of
+the full dataset.
+
+```{r partition}
+# Simple partition into train (80%) and test (20%) set 
+set.seed(17) # Do NOT change this
+trainIndex <- createDataPartition(fetal_health$b_fetal_health, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+
+fh_train <- fetal_health[as.vector(trainIndex), ]  
+fh_test <- fetal_health[-as.vector(trainIndex), ]
+
+```
+
+Let's do a quick check of the the target variable.
+
+```{r target_split_check_train}
+table(fh_train$b_fetal_health)
+prop.table(table(fh_train$b_fetal_health))
+```
+
+
+```{r target_split_check_test}
+table(fh_test$b_fetal_health)
+prop.table(table(fh_test$b_fetal_health))
+```
+
+
+## Step 5 - Building and evaluation of predictive classification models
+
+Now that you know a little more about the data, it's time to start building a
+few classification models for `b_fetal_health`. We will start out using overall prediction accuracy
+as our metric but we might want to consider other metrics.
+
+**QUESTION** Why might overall prediction accuracy not be the most appropriate metric to consider? What other
+metrics might be important and why?
+
+
+### Fit a null model
+
+A very simple model would be to simply predict that `b_fetal_health` is equal to 0. On
+the training data we saw that we'd be ~78% accurate.
+
+Let's create this null model and run a confusion matrix on its "predictions" for both the training
+and the test data.
+
+```{r tree_null}
+# Create a vector of 0's
+model_train_null <- rep(0, nrow(fh_train))
+model_test_null <- rep(0, nrow(fh_test))
+
+cm_train_null <- caret::confusionMatrix(as.factor(model_train_null), fh_train$b_fetal_health, positive="1")
+cm_train_null
+
+cm_test_null <- caret::confusionMatrix(as.factor(model_test_null), fh_test$b_fetal_health, positive="1")
+cm_test_null
+```
+
+**QUESTION** A few questions:
+
+* Are you surprised that the performance of the null model is almost identical on test and train? Why or why not?
+* Explain the sensitivity and specificity values. Why are they 0.0 and 1.0, respectively?
+
+
+So, as we begin fitting more complicated models, remember that we need to
+outperform the null model to make it worth it to use more complicated models.
+
+Now I'm going to ask you to fit three models:
+
+* a logistic regression model
+* a simple decision tree
+* a random forest
+
+We covered all three of these modeling techniques in the class notes.
+
+For each model type, you should:
+
+* fit the model on the training data,
+* assess the model's performance on the training data using the `confusionMatrix` function,
+* use the model to make predictions on the test data,
+* assess the model's performance on the test data using the `confusionMatrix` function,
+* discuss the results
+
+In your discussion of the results you should talk about things like:
+
+* how accurate is the model in predicting on the test data
+* is their evidence of overfitting?
+* how does the model do in terms of other metrics like sensitivity and specificity
+* other things you deem important.
+
+### Fit logistic regression models
+
+You'll start by creating a logistic regression model to predict `b_fetal_health`. Since there
+are not that many variables, let's use all of them. Here's a code skeleton to help you get started:
+
+**Hint**: There's an easy way to specify your model formula to include all of the predictor variables
+without typing out all the variable names. 
+
+```{r lr1_train}
+# Fit model to training data
+# model_lr1 <- glm(??? ~ ???, 
+#                 data=fh_train, family=???(link="???"))
+
+## Convert fitted model values to fitted classes
+
+# class_train_lr1 <- as.factor(???)
+                          
+# cm_train_lr1 <- confusionMatrix(???, ???, positive="1")
+# cm_train_lr1
+```
+
+Now, let's predict on test data.
+
+```{r lr1_test}
+
+# pred_lr1 <- predict(???, newdata = fh_test, type = "???")
+
+# class_test_lr1 <- as.factor(???)
+                          
+# cm_test_lr1 <- confusionMatrix(???, ???, positive="1")
+# cm_test_lr1
+
+```
+
+**QUESTION** How did accuracy, sensitivity and specificity change when predicting on test data instead of the training data?
+
+Now try to increase the sensitivity of the model without significantly changing the specificity (hopefully). 
+
+```{r increase_sensitivity}
+
+```
+
+**HACKER EXTRA** Create a double density plot to explore the impact of the threshold value on the
+predictions.
+
+```{r double_density}
+
+
+```
+
+
+## Fit simple decision tree model
+
+Now create a simple decision tree model to predict `b_fetal_health`. Again,
+use all the variables.
+
+```{r tree1_train}
+# model_tree1 <- ???(b_fetal_health ~ ???, data=???)
+
+# class_train_tree1 <- predict(???, type="???")
+
+# cm_train_tree1 <- confusionMatrix(???, ???, positive="1")
+# cm_train_tree1
+```
+
+Now, let's predict on test data.
+
+```{r tree1_test}
+
+# pred_tree1 <- predict(???, newdata = fh_test, type = "???")
+
+# cm_test_tree1 <- confusionMatrix(???, ???, positive="1")
+# cm_test_tree1
+
+```
+
+**QUESTION** How does the performance of the decision tree compare to your
+logistic regression model?
+
+## Fit random forest model
+
+Finally, fit a random forest model.
+
+```{r rf1_train}
+
+```
+
+Now, let's predict on test data.
+
+```{r rf1_test}
+
+
+```
+
+
+**QUESTION** Summarize the performance of all three of your models (logistic, tree, random forest)?
+If you had to pick one to use in an actual clinical environment, which model would you use and why?
+
+
+**HACKER EXTRA**
+
+Create a variable importance plot for your random forest to try to get a sense of which variables are most important in predicting fetal health. Build another random forest using only the top 5 or so variables
+suggested by the importance plot. How does the performance of this reduced model compare to the original model?
+
+```{r importance}
+
+```
+
