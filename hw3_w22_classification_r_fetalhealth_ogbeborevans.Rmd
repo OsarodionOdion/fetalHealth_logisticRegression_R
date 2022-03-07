@@ -235,7 +235,7 @@ as our metric but we might want to consider other metrics.
 
 **QUESTION** Why might overall prediction accuracy not be the most appropriate metric to consider? What other
 metrics might be important and why?
-
+> Overall prediction accuracy might not be the most appropriate metric because the accuracy of a model is dependent on the significance of the classifier to the subject. For example, patients with normal fetal health assessment make up 78% of all patients. From this, it can be noted that a model that easily defaults to '0' or a model that predicts '0' for all patients will be considered 78% accurate. However, all 471 patients with suspect or pathological fetal health assessment will be wrongly assessed. The Sensitivity Measure for such model can be important to determine how many '1's' (suspect or pathological fetal health) were predicted correctly.
 
 ### Fit a null model
 
