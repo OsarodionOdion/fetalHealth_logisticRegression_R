@@ -260,7 +260,12 @@ cm_test_null
 **QUESTION** A few questions:
 
 * Are you surprised that the performance of the null model is almost identical on test and train? Why or why not?
+
+> I am not surprised that the performance of the null model is almost identical on test and train because approximately 78% of the patients have "0" fetal health. So a model that defaults to "0" like the null model will have a similar accuracy. However, we can gain better insights on the performance of the model from the sensitivy measures. For both test and train, the null model has a sensitivity value of "0" because for all patients with a fetal health of "1", the model predicted 0.
+
 * Explain the sensitivity and specificity values. Why are they 0.0 and 1.0, respectively?
+
+> The sensitivity value of 0.0 shows that for all patients with fetal health of "1", the null model had a wrong prediction ("0"). While the specificity value of 1.0 shows that for all patients with fetal health of "0", the null model had the right prediction.
 
 
 So, as we begin fitting more complicated models, remember that we need to
@@ -285,7 +290,7 @@ For each model type, you should:
 In your discussion of the results you should talk about things like:
 
 * how accurate is the model in predicting on the test data
-* is their evidence of overfitting?
+* is there evidence of overfitting?
 * how does the model do in terms of other metrics like sensitivity and specificity
 * other things you deem important.
 
@@ -299,13 +304,15 @@ without typing out all the variable names.
 
 ```{r lr1_train}
 # Fit model to training data
-# model_lr1 <- glm(??? ~ ???, 
-#                 data=fh_train, family=???(link="???"))
 
-## Convert fitted model values to fitted classes
+f <- as.formula(paste('b_fetal_health ~', paste(colnames(fetal_health)[1:21], collapse='+')))
 
-# class_train_lr1 <- as.factor(???)
-                          
+model_lr1 <- glm(f, data=fh_train, family=binomial(link="logit"))
+
+# Convert fitted model values to fitted classes
+
+class_train_lr1 <- as.factor(model_lr1$y)
+
 # cm_train_lr1 <- confusionMatrix(???, ???, positive="1")
 # cm_train_lr1
 ```
