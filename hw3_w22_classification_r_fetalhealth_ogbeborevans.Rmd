@@ -304,46 +304,61 @@ without typing out all the variable names.
 
 ```{r lr1_train}
 # Fit model to training data
-
 f <- as.formula(paste('b_fetal_health ~', paste(colnames(fetal_health)[1:21], collapse='+')))
-
 model_lr1 <- glm(f, data=fh_train, family=binomial(link="logit"))
 
 # Convert fitted model values to fitted classes
+yhat_model_lr1 <- (model_lr1$fitted.values > 0.5) * 1
+class_train_lr1 <- data.frame(as.factor(model_lr1$y),
+                             as.factor(yhat_model_lr1))
+names(class_train_lr1) <- c("yact","yhat")
 
-class_train_lr1 <- as.factor(model_lr1$y)
-
-# cm_train_lr1 <- confusionMatrix(???, ???, positive="1")
-# cm_train_lr1
+cm_train_lr1 <- confusionMatrix(class_train_lr1$yhat, class_train_lr1$yact, positive="1")
+cm_train_lr1
 ```
 
 Now, let's predict on test data.
 
 ```{r lr1_test}
 
-# pred_lr1 <- predict(???, newdata = fh_test, type = "???")
+pred_lr1 <- predict(model_lr1, newdata = fh_test, type = "response")
 
-# class_test_lr1 <- as.factor(???)
-                          
-# cm_test_lr1 <- confusionMatrix(???, ???, positive="1")
-# cm_test_lr1
+yhat_pred_lr1 <- (pred_lr1 > 0.5) * 1
+class_test_lr1 <- data.frame(fh_test$b_fetal_health, as.factor(yhat_pred_lr1))
+names(class_test_lr1) <- c("yact","yhat")
+
+cm_test_lr1 <- confusionMatrix(class_test_lr1$yhat, class_test_lr1$yact, positive="1")
+cm_test_lr1
 
 ```
 
 **QUESTION** How did accuracy, sensitivity and specificity change when predicting on test data instead of the training data?
+> The accuracy decreased from 91% on the trianing data to 89% on the test data. The sensitivity decreased from 79% on the training data to 70% on the test data, and with 94.86% on the training data and 94.56% on the test data, the specificity value was fairly constant.
 
 Now try to increase the sensitivity of the model without significantly changing the specificity (hopefully). 
 
 ```{r increase_sensitivity}
+cm_test_lr1$byClass["Sensitivity"]
+cm_test_lr1$byClass["Specificity"]
 
+pred_lr1_v2 <- predict(model_lr1, newdata = fh_test, type = "response")
+
+yhat_pred_lr1_v2 <- (pred_lr1_v2 > 0.35) * 1
+class_test_lr1_v2 <- data.frame(fh_test$b_fetal_health, as.factor(yhat_pred_lr1_v2))
+names(class_test_lr1_v2) <- c("yact","yhat")
+
+cm_test_lr1_v2 <- confusionMatrix(class_test_lr1_v2$yhat, class_test_lr1_v2$yact, positive="1")
+cm_test_lr1_v2$byClass["Sensitivity"]
+cm_test_lr1_v2$byClass["Specificity"]
 ```
 
 **HACKER EXTRA** Create a double density plot to explore the impact of the threshold value on the
 predictions.
 
 ```{r double_density}
+double_density_df <- data.frame(probability = model_lr1$fitted.values, prediction = class_train_lr1$yhat)
 
-
+ggplot(data = double_density_df, aes(x = probability, colour = prediction)) + geom_density()
 ```
 
 
