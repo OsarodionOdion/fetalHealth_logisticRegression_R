@@ -338,8 +338,6 @@ cm_test_lr1
 Now try to increase the sensitivity of the model without significantly changing the specificity (hopefully). 
 
 ```{r increase_sensitivity}
-cm_test_lr1$byClass["Sensitivity"]
-cm_test_lr1$byClass["Specificity"]
 
 pred_lr1_v2 <- predict(model_lr1, newdata = fh_test, type = "response")
 
@@ -348,8 +346,10 @@ class_test_lr1_v2 <- data.frame(fh_test$b_fetal_health, as.factor(yhat_pred_lr1_
 names(class_test_lr1_v2) <- c("yact","yhat")
 
 cm_test_lr1_v2 <- confusionMatrix(class_test_lr1_v2$yhat, class_test_lr1_v2$yact, positive="1")
-cm_test_lr1_v2$byClass["Sensitivity"]
-cm_test_lr1_v2$byClass["Specificity"]
+
+sprintf("Sensitivity: initial = %.3f version 2 = %.3f",cm_test_lr1$byClass["Sensitivity"],cm_test_lr1_v2$byClass["Sensitivity"])
+
+sprintf("Specificity: initial = %.3f version 2 = %.3f",cm_test_lr1$byClass["Specificity"],cm_test_lr1_v2$byClass["Specificity"])
 ```
 
 **HACKER EXTRA** Create a double density plot to explore the impact of the threshold value on the
@@ -368,47 +368,83 @@ Now create a simple decision tree model to predict `b_fetal_health`. Again,
 use all the variables.
 
 ```{r tree1_train}
-# model_tree1 <- ???(b_fetal_health ~ ???, data=???)
+model_tree1 <- rpart(f, data=fh_train)
+rpart.plot(model_tree1)
 
-# class_train_tree1 <- predict(???, type="???")
+class_train_tree1 <- predict(model_tree1, type="class")
 
-# cm_train_tree1 <- confusionMatrix(???, ???, positive="1")
-# cm_train_tree1
+cm_train_tree1 <- confusionMatrix(class_train_tree1, fh_train$b_fetal_health, positive="1")
+cm_train_tree1
 ```
 
 Now, let's predict on test data.
 
 ```{r tree1_test}
 
-# pred_tree1 <- predict(???, newdata = fh_test, type = "???")
+pred_tree1 <- predict(model_tree1, newdata = fh_test, type = "class")
 
-# cm_test_tree1 <- confusionMatrix(???, ???, positive="1")
-# cm_test_tree1
+cm_test_tree1 <- confusionMatrix(pred_tree1, fh_test$b_fetal_health, positive="1")
+cm_test_tree1
 
 ```
 
 **QUESTION** How does the performance of the decision tree compare to your
 logistic regression model?
 
+```{r DT_LR_performance}
+#LR and DT Accuracy on train and test data sets
+sprintf("Accuracy on Training Data: Logistic Regression = %.3f Decision Trees = %.3f",cm_train_lr1$overall["Accuracy"],cm_train_tree1$overall["Accuracy"])
+
+sprintf("Accuracy on Test Data: Logistic Regression = %.3f Decision Trees = %.3f",cm_test_lr1$overall["Accuracy"],cm_test_tree1$overall["Accuracy"])
+
+#LR and DT Sensitivity on train and test data sets
+sprintf("Sensitivity on Training Data: Logistic Regression = %.3f Decision Trees = %.3f",cm_train_lr1$byClass["Sensitivity"],cm_train_tree1$byClass["Sensitivity"])
+
+sprintf("Sensitivity on Test Data: Logistic Regression = %.3f Decision Trees = %.3f",cm_test_lr1$byClass["Sensitivity"],cm_test_tree1$byClass["Sensitivity"])
+
+#LR and DT Specificity on train and test data sets
+sprintf("Specificity on Training Data: Logistic Regression = %.3f Decision Trees = %.3f",cm_train_lr1$byClass["Specificity"],cm_train_tree1$byClass["Specificity"])
+
+sprintf("Specificity on Test Data: Logistic Regression = %.3f Decision Trees = %.3f",cm_test_lr1$byClass["Specificity"],cm_test_tree1$byClass["Specificity"])
+
+```
+
+> With higher Accuracy, Sensitivity and Specificity values for both training and test data sets, the decision tree performed better than the logistic regression model.
+
 ## Fit random forest model
 
 Finally, fit a random forest model.
 
 ```{r rf1_train}
-
+model_randforest1 <- randomForest(f, data=fh_train, mtry=7, importance=TRUE, na.action = na.omit)
+model_randforest1
 ```
 
 Now, let's predict on test data.
 
 ```{r rf1_test}
-
-
+pred_randforest1 <- predict(model_randforest1, fh_test, type = "class")
+cm_test_randforest1 <- confusionMatrix(pred_randforest1, fh_test$b_fetal_health, positive="1")
+cm_test_randforest1
 ```
 
 
 **QUESTION** Summarize the performance of all three of your models (logistic, tree, random forest)?
 If you had to pick one to use in an actual clinical environment, which model would you use and why?
 
+```{r models_performance}
+#LR DT & RF Accuracy on test data sets
+sprintf("Accuracy on Test Data: Logistic Regression = %.3f Decision Trees = %.3f Random Forest = %.3f",cm_test_lr1$overall["Accuracy"],cm_test_tree1$overall["Accuracy"],cm_test_randforest1$overall["Accuracy"])
+
+#LR DT & RF Sensitivity on test data sets
+sprintf("Sensitivity on Test Data: Logistic Regression = %.3f Decision Trees = %.3f Random Forest = %.3f",cm_test_lr1$byClass["Sensitivity"],cm_test_tree1$byClass["Sensitivity"],cm_test_randforest1$byClass["Sensitivity"])
+
+#LR DT & RF Specificity on test data sets
+sprintf("Specificity on Test Data: Logistic Regression = %.3f Decision Trees = %.3f Random Forest = %.3f",cm_test_lr1$byClass["Specificity"],cm_test_tree1$byClass["Specificity"],cm_test_randforest1$byClass["Specificity"])
+
+```
+
+> With the highest Accuracy, Sensitivity and Specificity values for the test data set, the random forest model performed best among the 3 models. In a clinical environment, my choice would be the random forest because of the accuracy and sensitivity values. It is paramount that a model is able to identify patients with suspect or pathological fetal health. If a patient is wrongly assessed as suspect or pathological, then further tests can help verify and correct the assessment. However, patients with suspect or pathological fetal health that are wrongly predicted to be normal might not undergo further tests.
 
 **HACKER EXTRA**
 
@@ -416,6 +452,16 @@ Create a variable importance plot for your random forest to try to get a sense o
 suggested by the importance plot. How does the performance of this reduced model compare to the original model?
 
 ```{r importance}
+df_imp <- as.data.frame(model_randforest1$importance) %>% 
+  arrange(desc(MeanDecreaseGini))
+
+df_imp <- tibble::rownames_to_column(df_imp, "variable")
+df_imp
+
+ggplot(data = df_imp) + geom_bar(aes(x=reorder(variable, MeanDecreaseAccuracy), y=MeanDecreaseAccuracy), stat = "identity") + coord_flip()
+```
+
+```{r}
 
 ```
 
