@@ -338,8 +338,6 @@ cm_test_lr1
 Now try to increase the sensitivity of the model without significantly changing the specificity (hopefully). 
 
 ```{r increase_sensitivity}
-cm_test_lr1$byClass["Sensitivity"]
-cm_test_lr1$byClass["Specificity"]
 
 pred_lr1_v2 <- predict(model_lr1, newdata = fh_test, type = "response")
 
@@ -348,8 +346,10 @@ class_test_lr1_v2 <- data.frame(fh_test$b_fetal_health, as.factor(yhat_pred_lr1_
 names(class_test_lr1_v2) <- c("yact","yhat")
 
 cm_test_lr1_v2 <- confusionMatrix(class_test_lr1_v2$yhat, class_test_lr1_v2$yact, positive="1")
-cm_test_lr1_v2$byClass["Sensitivity"]
-cm_test_lr1_v2$byClass["Specificity"]
+
+sprintf("Sensitivity: initial = %.3f version 2 = %.3f",cm_test_lr1$byClass["Sensitivity"],cm_test_lr1_v2$byClass["Sensitivity"])
+
+sprintf("Specificity: initial = %.3f version 2 = %.3f",cm_test_lr1$byClass["Specificity"],cm_test_lr1_v2$byClass["Specificity"])
 ```
 
 **HACKER EXTRA** Create a double density plot to explore the impact of the threshold value on the
@@ -368,27 +368,53 @@ Now create a simple decision tree model to predict `b_fetal_health`. Again,
 use all the variables.
 
 ```{r tree1_train}
-# model_tree1 <- ???(b_fetal_health ~ ???, data=???)
+model_tree1 <- rpart(f, data=fh_train)
+rpart.plot(model_tree1)
 
-# class_train_tree1 <- predict(???, type="???")
+class_train_tree1 <- predict(model_tree1, type="class")
 
-# cm_train_tree1 <- confusionMatrix(???, ???, positive="1")
-# cm_train_tree1
+cm_train_tree1 <- confusionMatrix(class_train_tree1, fh_train$b_fetal_health, positive="1")
+cm_train_tree1
 ```
 
 Now, let's predict on test data.
 
 ```{r tree1_test}
 
-# pred_tree1 <- predict(???, newdata = fh_test, type = "???")
+pred_tree1 <- predict(model_tree1, newdata = fh_test, type = "class")
 
-# cm_test_tree1 <- confusionMatrix(???, ???, positive="1")
-# cm_test_tree1
+cm_test_tree1 <- confusionMatrix(pred_tree1, fh_test$b_fetal_health, positive="1")
+cm_test_tree1
 
 ```
 
 **QUESTION** How does the performance of the decision tree compare to your
 logistic regression model?
+
+```{r}
+#LR and DT Accuracy on train and test data sets
+cm_train_lr1$overall["Accuracy"]
+cm_train_tree1$overall["Accuracy"]
+
+cm_test_lr1$overall["Accuracy"]
+cm_test_tree1$overall["Accuracy"]
+
+#LR and DT Sensitivity on train and test data sets
+cm_train_lr1$byClass["Sensitivity"]
+cm_train_tree1$byClass["Sensitivity"]
+
+cm_test_lr1$byClass["Sensitivity"]
+cm_test_tree1$byClass["Sensitivity"]
+
+#LR and DT Sensitivity on train and test data sets
+cm_train_lr1$byClass["Specificity"]
+cm_train_tree1$byClass["Specificity"]
+
+cm_test_lr1$byClass["Specificity"]
+cm_test_tree1$byClass["Specificity"]
+
+```
+
 
 ## Fit random forest model
 
