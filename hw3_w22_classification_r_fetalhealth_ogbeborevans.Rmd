@@ -235,6 +235,7 @@ as our metric but we might want to consider other metrics.
 
 **QUESTION** Why might overall prediction accuracy not be the most appropriate metric to consider? What other
 metrics might be important and why?
+
 > Overall prediction accuracy might not be the most appropriate metric because the accuracy of a model is dependent on the significance of the classifier to the subject. For example, patients with normal fetal health assessment make up 78% of all patients. From this, it can be noted that a model that easily defaults to '0' or a model that predicts '0' for all patients will be considered 78% accurate. However, all 471 patients with suspect or pathological fetal health assessment will be wrongly assessed. The Sensitivity Measure for such model can be important to determine how many '1's' (suspect or pathological fetal health) were predicted correctly.
 
 ### Fit a null model
@@ -333,12 +334,12 @@ cm_test_lr1
 ```
 
 **QUESTION** How did accuracy, sensitivity and specificity change when predicting on test data instead of the training data?
+
 > The accuracy decreased from 91% on the trianing data to 89% on the test data. The sensitivity decreased from 79% on the training data to 70% on the test data, and with 94.86% on the training data and 94.56% on the test data, the specificity value was fairly constant.
 
 Now try to increase the sensitivity of the model without significantly changing the specificity (hopefully). 
 
 ```{r increase_sensitivity}
-
 pred_lr1_v2 <- predict(model_lr1, newdata = fh_test, type = "response")
 
 yhat_pred_lr1_v2 <- (pred_lr1_v2 > 0.35) * 1
@@ -350,6 +351,7 @@ cm_test_lr1_v2 <- confusionMatrix(class_test_lr1_v2$yhat, class_test_lr1_v2$yact
 sprintf("Sensitivity: initial = %.3f version 2 = %.3f",cm_test_lr1$byClass["Sensitivity"],cm_test_lr1_v2$byClass["Sensitivity"])
 
 sprintf("Specificity: initial = %.3f version 2 = %.3f",cm_test_lr1$byClass["Specificity"],cm_test_lr1_v2$byClass["Specificity"])
+
 ```
 
 **HACKER EXTRA** Create a double density plot to explore the impact of the threshold value on the
@@ -359,6 +361,7 @@ predictions.
 double_density_df <- data.frame(probability = model_lr1$fitted.values, prediction = class_train_lr1$yhat)
 
 ggplot(data = double_density_df, aes(x = probability, colour = prediction)) + geom_density()
+
 ```
 
 
@@ -375,6 +378,7 @@ class_train_tree1 <- predict(model_tree1, type="class")
 
 cm_train_tree1 <- confusionMatrix(class_train_tree1, fh_train$b_fetal_health, positive="1")
 cm_train_tree1
+
 ```
 
 Now, let's predict on test data.
@@ -444,7 +448,7 @@ sprintf("Specificity on Test Data: Logistic Regression = %.3f Decision Trees = %
 
 ```
 
-> With the highest Accuracy, Sensitivity and Specificity values for the test data set, the random forest model performed best among the 3 models. In a clinical environment, my choice would be the random forest because of the accuracy and sensitivity values. It is paramount that a model is able to identify patients with suspect or pathological fetal health. If a patient is wrongly assessed as suspect or pathological, then further tests can help verify and correct the assessment. However, patients with suspect or pathological fetal health that are wrongly predicted to be normal might not undergo further tests.
+> With the highest Accuracy, Sensitivity and Specificity values on the test data set, the random forest model performed best among the 3 models. In a clinical environment, my choice would be the random forest because of the accuracy and sensitivity values. It is paramount that a model is able to identify patients with suspect or pathological fetal health. If a patient is wrongly assessed as suspect or pathological, then further tests can help verify and correct the assessment. However, patients with suspect or pathological fetal health that are wrongly predicted to be normal might not undergo further tests.
 
 **HACKER EXTRA**
 
@@ -461,7 +465,7 @@ df_imp
 ggplot(data = df_imp) + geom_bar(aes(x=reorder(variable, MeanDecreaseAccuracy), y=MeanDecreaseAccuracy), stat = "identity") + coord_flip()
 ```
 
-```{r rf1_train}
+```{r rf2_train}
 model_randforest2 <- randomForest(b_fetal_health ~ abnormal_short_term_variability+ mean_value_of_short_term_variability+percentage_of_time_with_abnormal_long_term_variability+accelerations+histogram_mean, data=fh_train, importance=TRUE, na.action = na.omit)
 
 model_randforest2
@@ -487,4 +491,4 @@ sprintf("Sensitivity on Test Data: Model 1 = %.3f Model 2 = %.3f",cm_test_randfo
 sprintf("Specificity on Test Data: Model 1 = %.3f Model 2 = %.3f",cm_test_randforest1$byClass["Specificity"],cm_test_randforest2$byClass["Specificity"])
 ```
 
-> Overall, the reduced random forest model performed as good as the original model
+> There was a decrease in the Accuracy, Sensitivity and Specificity values of the reduced random forest model when compared to the original model. But the reduced model performed better than the logistic regression and decision tree models. Overall, the reduced random forest model performed as good as the original model.
