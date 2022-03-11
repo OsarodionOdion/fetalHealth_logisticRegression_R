@@ -461,7 +461,30 @@ df_imp
 ggplot(data = df_imp) + geom_bar(aes(x=reorder(variable, MeanDecreaseAccuracy), y=MeanDecreaseAccuracy), stat = "identity") + coord_flip()
 ```
 
-```{r}
+```{r rf1_train}
+model_randforest2 <- randomForest(b_fetal_health ~ abnormal_short_term_variability+ mean_value_of_short_term_variability+percentage_of_time_with_abnormal_long_term_variability+accelerations+histogram_mean, data=fh_train, importance=TRUE, na.action = na.omit)
+
+model_randforest2
 
 ```
 
+
+```{r rf2_test}
+pred_randforest2 <- predict(model_randforest2, fh_test, type = "class")
+cm_test_randforest2 <- confusionMatrix(pred_randforest2, fh_test$b_fetal_health, positive="1")
+cm_test_randforest2
+
+```
+
+```{r performance_of_randomforest_models}
+#RF Accuracy on test data sets
+sprintf("Accuracy on Test Data: Model 1 = %.3f Model 2 = %.3f",cm_test_randforest1$overall["Accuracy"],cm_test_randforest2$overall["Accuracy"])
+
+#RF Sensitivity on test data sets
+sprintf("Sensitivity on Test Data: Model 1 = %.3f Model 2 = %.3f",cm_test_randforest1$byClass["Sensitivity"],cm_test_randforest2$byClass["Sensitivity"])
+
+#RF Specificity on test data sets
+sprintf("Specificity on Test Data: Model 1 = %.3f Model 2 = %.3f",cm_test_randforest1$byClass["Specificity"],cm_test_randforest2$byClass["Specificity"])
+```
+
+> Overall, the reduced random forest model performed as good as the original one.
