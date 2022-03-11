@@ -391,6 +391,7 @@ cm_test_tree1
 **QUESTION** How does the performance of the decision tree compare to your
 logistic regression model?
 
+<<<<<<< HEAD
 ```{r DT_LR_performance}
 #LR and DT Accuracy on train and test data sets
 sprintf("Accuracy on Training Data: Logistic Regression = %.3f Decision Trees = %.3f",cm_train_lr1$overall["Accuracy"],cm_train_tree1$overall["Accuracy"])
@@ -410,6 +411,32 @@ sprintf("Specificity on Test Data: Logistic Regression = %.3f Decision Trees = %
 ```
 
 > With higher Accuracy, Sensitivity and Specificity values for both training and test data sets, the decision tree performed better than the logistic regression model.
+=======
+```{r}
+#LR and DT Accuracy on train and test data sets
+cm_train_lr1$overall["Accuracy"]
+cm_train_tree1$overall["Accuracy"]
+
+cm_test_lr1$overall["Accuracy"]
+cm_test_tree1$overall["Accuracy"]
+
+#LR and DT Sensitivity on train and test data sets
+cm_train_lr1$byClass["Sensitivity"]
+cm_train_tree1$byClass["Sensitivity"]
+
+cm_test_lr1$byClass["Sensitivity"]
+cm_test_tree1$byClass["Sensitivity"]
+
+#LR and DT Sensitivity on train and test data sets
+cm_train_lr1$byClass["Specificity"]
+cm_train_tree1$byClass["Specificity"]
+
+cm_test_lr1$byClass["Specificity"]
+cm_test_tree1$byClass["Specificity"]
+
+```
+
+>>>>>>> 57cf7ca43dc50539b7fabc85e335fae516ee9608
 
 ## Fit random forest model
 
