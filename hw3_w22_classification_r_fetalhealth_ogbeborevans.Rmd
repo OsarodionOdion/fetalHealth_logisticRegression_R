@@ -1,6 +1,6 @@
 ---
 title: "HW3-Classification modeling with R"
-author: "misken"
+author: "Osarodion"
 date: "February 9, 2022"
 output:
  html_document: 
