@@ -1,7 +1,7 @@
 # Classification Modelling with R
-This assignment will focus on building simple classification models for
+This project will focus on building simple classification models for
 **predicting fetal health** based on a number of clinical measurements known
-as *cardiotocographic data*. 
+as *cardiotocographic data*.
 
 The following introductory information was taken from the main
 [Kaggle Dataset page](https://www.kaggle.com/andrewmvd/fetal-health-classification) for this data:
