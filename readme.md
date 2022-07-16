@@ -1,13 +1,13 @@
 # Classification Modelling with R
 This assignment will focus on building simple classification models for
-*predicting fetal health* based on a number of clinical measurements known
+**predicting fetal health** based on a number of clinical measurements known
 as *cardiotocographic data*. 
 
 The following introductory information was taken from the main
 [Kaggle Dataset page](https://www.kaggle.com/andrewmvd/fetal-health-classification) for this data:
 
 ## Contents
-All completed work for this project can be viewed in the `hw3_w22_classification_r_fetalhealth_ogbeborevans.html` file. The project was completed in R. For the source file, please access `hw3_w22_classification_r_fetalhealth_ogbeborevans.Rmd`
+All completed work for this project can be viewed in the html file  [Classification Modelling with R](hw3_w22_classification_r_fetalhealth_ogbeborevans.html). The project was completed in R. For the source file, please access `hw3_w22_classification_r_fetalhealth_ogbeborevans.Rmd`
 
 You can learn much more about the study behind this dataset from the following
 published paper:
