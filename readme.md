@@ -4,7 +4,7 @@ This project will focus on building simple classification models for
 as *cardiotocographic data*.
 
 ## Contents
-All completed work for this project can be viewed in the html file [Classification Modelling with R](hw3_w22_classification_r_fetalhealth_ogbeborevans.html). The html file can be pulled from the repo or downloaded to your local device and viewed in a compatible browser.
+All completed work for this project can be viewed in the html file [Classification Modelling with R](hw3_w22_classification_r_fetalhealth_ogbeborevans.html). The html file can be pulled from the repo or downloaded to your local device, and viewed in a compatible browser.
 
 The project was completed in R, and the code can be found in the [RMD](hw3_w22_classification_r_fetalhealth_ogbeborevans.Rmd) file.
 
