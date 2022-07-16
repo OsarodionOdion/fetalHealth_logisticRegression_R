@@ -6,7 +6,7 @@ as *cardiotocographic data*.
 ## Contents
 All completed work for this project can be viewed in the html file [Classification Modelling with R](hw3_w22_classification_r_fetalhealth_ogbeborevans.html). The html file can be pulled from the repo or downloaded to your local device, and viewed in a compatible browser.
 
-The project was completed in R, and the complete code can be found in the [RMD](hw3_w22_classification_r_fetalhealth_ogbeborevans.Rmd) file.
+The project was completed in R, and the completed code can be found in the [RMD](hw3_w22_classification_r_fetalhealth_ogbeborevans.Rmd) file.
 
 The [source file](hw3_w22_classification_r_fetalhealth_problem.Rmd) for this project was created by Professor Mark Isken, SBA, Oakland University, Rochester, MI. USA.
 
