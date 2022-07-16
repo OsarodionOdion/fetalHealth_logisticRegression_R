@@ -3,9 +3,6 @@ This project will focus on building simple classification models for
 **predicting fetal health** based on a number of clinical measurements known
 as *cardiotocographic data*.
 
-The following introductory information was taken from the main
-[Kaggle Dataset page](https://www.kaggle.com/andrewmvd/fetal-health-classification) for this data:
-
 ## Contents
 All completed work for this project can be viewed in the html file [Classification Modelling with R](hw3_w22_classification_r_fetalhealth_ogbeborevans.html). The html file can be pulled from the repo or downloaded to your local device and viewed in a compatible browser.
 
